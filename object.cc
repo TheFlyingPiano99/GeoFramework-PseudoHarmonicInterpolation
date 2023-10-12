@@ -38,6 +38,7 @@ void Object::draw(const Visualization &vis) const {
     }
     for (auto f : mesh.faces()) {
       glBegin(GL_POLYGON);
+      // Do something here
       for (auto v : f.vertices()) {
         if (vis.type == VisType::MEAN)
           glColor3dv(vis.colorMap(vis.mean_min, vis.mean_max, mesh.data(v).mean).data());
