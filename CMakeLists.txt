@@ -59,6 +59,10 @@ add_executable(geo-framework WIN32
   viewer.cc
   visualization.cc
   window.cc
+  bspline.cc bspline.hh
+  bsplineHelper.cc bsplineHelper.hh
+  matrix3x3.cc trimesh.cc vector.cc
+
   )
 
 if(WITH_JET_FITTING)

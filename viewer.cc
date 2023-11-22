@@ -3,6 +3,7 @@
 #include "bezier.hh"
 #include "mesh.hh"
 #include "viewer.hh"
+#include "bspline.hh"
 
 Viewer::Viewer(QWidget *parent) : QGLViewer(parent) {
   setSelectRegionWidth(10);
@@ -65,6 +66,8 @@ bool Viewer::open(std::string filename) {
   std::shared_ptr<Object> surface;
   if (filename.ends_with(".bzr"))
     surface = std::make_shared<Bezier>(filename);
+  else if (filename.ends_with(".dbs"))  // The file should contain the description of a Default B-spline surface.
+    surface = std::make_shared<BSpline>(filename);
   else
     surface = std::make_shared<Mesh>(filename);
   if (!surface->valid())

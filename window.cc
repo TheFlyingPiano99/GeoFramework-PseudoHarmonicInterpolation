@@ -64,6 +64,7 @@ void Window::open(bool clear_others) {
                                  tr("Readable files (*.obj *.ply *.stl *.bzr);;"
                                     "Mesh (*.obj *.ply *.stl);;"
                                     "Bézier surface (*.bzr);;"
+                                    "Default B-spline surface (*.dbs);;"
                                     "All files (*.*)"));
   if (filename.isEmpty())
     return;
