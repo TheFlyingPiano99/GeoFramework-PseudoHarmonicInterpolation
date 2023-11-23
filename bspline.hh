@@ -39,16 +39,16 @@ private:
   std::vector<double> knots[2];
   std::vector<Vector> control_points;
   double fullness = 0.5;
-  size_t cp_index(size_t a, size_t b);
+  size_t cp_index(size_t a, size_t b) const;
 
   void calculateInnerControlPoints();
 
-  double gamma(unsigned int u_or_v, unsigned int idx);
+  double gamma(unsigned int u_or_v, unsigned int idx) const;
 
   /*
    * sign in {0, 1}
    * 0 ... negative
    * 1 ... positive
   */
-  double delta(unsigned int i, unsigned int j, int sign, unsigned int u_or_v);
+  double delta(unsigned int i, unsigned int j, int sign, unsigned int u_or_v) const;
 };

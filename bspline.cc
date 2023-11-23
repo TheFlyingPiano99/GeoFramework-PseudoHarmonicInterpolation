@@ -17,24 +17,34 @@ void BSpline::draw(const Visualization &vis) const {
     glDisable(GL_LIGHTING);
     glLineWidth(3.0);
     glColor3d(0.3, 0.3, 1.0);
-    size_t m = degree[1] + 1;
-    for (size_t k = 0; k < 2; ++k)
-      for (size_t i = 0; i <= degree[k]; ++i) {
-        glBegin(GL_LINE_STRIP);
-        for (size_t j = 0; j <= degree[1-k]; ++j) {
-          size_t const index = k ? j * m + i : i * m + j;
-          const auto &p = control_points[index];
-          glVertex3dv(p.data());
-        }
-        glEnd();
+
+    for (size_t i = 0; i < no_of_control_points[0]; i++) {
+      glBegin(GL_LINE_STRIP);
+      for (size_t j = 0; j < no_of_control_points[1]; j++) {
+          const auto &p = control_points[cp_index(i, j)];
+        glVertex3dv(p.data());
       }
-    glLineWidth(1.0);
+      glEnd();
+    }
+    for (size_t j = 0; j < no_of_control_points[1]; j++) {
+      glBegin(GL_LINE_STRIP);
+      for (size_t i = 0; i < no_of_control_points[0]; i++) {
+        const auto &p = control_points[cp_index(i, j)];
+        glVertex3dv(p.data());
+      }
+      glEnd();
+    }
+
+    /*
     glPointSize(8.0);
     glColor3d(1.0, 0.0, 1.0);
     glBegin(GL_POINTS);
     for (const auto &p : control_points)
       glVertex3dv(p.data());
     glEnd();
+    */
+
+    glLineWidth(1.0);
     glPointSize(1.0);
     glEnable(GL_LIGHTING);
   }
@@ -119,7 +129,7 @@ void BSpline::updateBaseMesh() {
   Object::updateBaseMesh(false, false);
 }
 
-size_t BSpline::cp_index(size_t u, size_t v) {
+size_t BSpline::cp_index(size_t u, size_t v) const {
   return u * no_of_control_points[1] + v;
 }
 
@@ -168,7 +178,7 @@ void BSpline::calculateInnerControlPoints() {
     }
 }
 
-double BSpline::gamma(unsigned int u_or_v, unsigned int idx) {
+double BSpline::gamma(unsigned int u_or_v, unsigned int idx) const {
     double sum = 0.0;
     for (int k = 1; k <= degree[u_or_v]; k++) {
       sum += knots[u_or_v][idx + k];
@@ -176,7 +186,7 @@ double BSpline::gamma(unsigned int u_or_v, unsigned int idx) {
     return sum / (double)degree[u_or_v];
 }
 
-double BSpline::delta(unsigned int i, unsigned int j, int sign, unsigned int u_or_v) {
+double BSpline::delta(unsigned int i, unsigned int j, int sign, unsigned int u_or_v) const {
     return (gamma(u_or_v, ((u_or_v == 0)? i:j) + sign) - gamma(u_or_v, ((u_or_v == 0)? i:j) + sign - 1))
            / (gamma(u_or_v, ((u_or_v == 0)? i:j) + 1) - gamma(u_or_v, ((u_or_v == 0)? i:j) - 1));
 }
@@ -205,7 +215,7 @@ bool BSpline::reload() {
     }
     for (size_t u = 0; u < no_of_control_points[0]; u++) {
       size_t idx = cp_index(u, 0);
-      std::cout << "Entering prev. to last iter: U = " << u << " Idx = "<< idx << std::endl;
+      std::cout << "U = " << u << " Idx = "<< idx << std::endl;
       f >> control_points[idx][0] >> control_points[idx][1] >> control_points[idx][2];
       std::cout << control_points[idx][0] << " " <<  control_points[idx][1] << " " << control_points[idx][2] << std::endl;
     }
@@ -217,7 +227,7 @@ bool BSpline::reload() {
     }
     for (int u = no_of_control_points[0] - 2; u >= 0; u--) {
       size_t idx = cp_index(u, no_of_control_points[1] - 1);
-      std::cout << "Entering prev. to last iter: U = " << u << " Idx = "<< idx << std::endl;
+      std::cout << "U = " << u << " Idx = "<< idx << std::endl;
       f >> control_points[idx][0] >> control_points[idx][1] >> control_points[idx][2];
       std::cout << control_points[idx][0] << " " <<  control_points[idx][1] << " " << control_points[idx][2] << std::endl;
     }
