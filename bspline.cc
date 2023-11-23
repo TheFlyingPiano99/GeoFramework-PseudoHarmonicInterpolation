@@ -35,14 +35,26 @@ void BSpline::draw(const Visualization &vis) const {
       glEnd();
     }
 
-    /*
     glPointSize(8.0);
     glColor3d(1.0, 0.0, 1.0);
     glBegin(GL_POINTS);
-    for (const auto &p : control_points)
+    for (int u = 0; u < no_of_control_points[0]; u++) {
+      const auto &p = control_points[cp_index(u, 0)];
       glVertex3dv(p.data());
+    }
+    for (int v = 1; v < no_of_control_points[1] - 1; v++) {
+      const auto &p = control_points[cp_index(0, v)];
+      glVertex3dv(p.data());
+    }
+    for (int v = 1; v < no_of_control_points[1] - 1; v++) {
+      const auto &p = control_points[cp_index(no_of_control_points[0] - 1, v)];
+      glVertex3dv(p.data());
+    }
+    for (int u = 0; u < no_of_control_points[0]; u++) {
+      const auto &p = control_points[cp_index(u, no_of_control_points[1] - 1)];
+      glVertex3dv(p.data());
+    }
     glEnd();
-    */
 
     glLineWidth(1.0);
     glPointSize(1.0);
@@ -53,6 +65,7 @@ void BSpline::draw(const Visualization &vis) const {
 void BSpline::drawWithNames(const Visualization &vis) const {
   if (!vis.show_control_points)
     return;
+
   for (size_t i = 0; i < control_points.size(); ++i) {
     const auto &p = control_points[i];
     glPushName(i);
