@@ -66,7 +66,29 @@ void BSpline::drawWithNames(const Visualization &vis) const {
   if (!vis.show_control_points)
     return;
 
-  for (size_t i = 0; i < control_points.size(); ++i) {
+  for (int u = 0; u < no_of_control_points[0]; u++) {
+    int i = cp_index(u, 0);
+    const auto &p = control_points[i];
+    glPushName(i);
+    glRasterPos3dv(p.data());
+    glPopName();
+  }
+  for (int v = 1; v < no_of_control_points[1] - 1; v++) {
+    int i = cp_index(0, v);
+    const auto &p = control_points[i];
+    glPushName(i);
+    glRasterPos3dv(p.data());
+    glPopName();
+  }
+  for (int v = 1; v < no_of_control_points[1] - 1; v++) {
+    int i = cp_index(no_of_control_points[0] - 1, v);
+    const auto &p = control_points[i];
+    glPushName(i);
+    glRasterPos3dv(p.data());
+    glPopName();
+  }
+  for (int u = 0; u < no_of_control_points[0]; u++) {
+    int i = cp_index(u, no_of_control_points[1] - 1);
     const auto &p = control_points[i];
     glPushName(i);
     glRasterPos3dv(p.data());
@@ -98,7 +120,7 @@ static void bernstein(size_t n, double u, std::vector<double> &coeff) {
 }
 
 void BSpline::updateBaseMesh() {
-  // TODO: rewrite for B-spline
+  calculateInnerControlPoints();
 
   size_t resolution = 50;
 
@@ -250,8 +272,6 @@ bool BSpline::reload() {
       f >> control_points[idx][0] >> control_points[idx][1] >> control_points[idx][2];
       std::cout << control_points[idx][0] << " " <<  control_points[idx][1] << " " << control_points[idx][2] << std::endl;
     }
-
-    calculateInnerControlPoints();
 
   } catch(std::ifstream::failure &) {
     return false;
