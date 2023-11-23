@@ -125,6 +125,8 @@ void BSpline::updateBaseMesh() {
   size_t resolution = 50;
 
   mesh.clear();
+  analiticNormals.clear();
+  analiticCurvature.clear();
   std::vector<BaseMesh::VertexHandle> handles, tri;
 
   std::vector<Geometry::Vector3D> cps;
@@ -139,12 +141,15 @@ void BSpline::updateBaseMesh() {
     double u = (double)i / (double)(resolution - 1);
     for (size_t j = 0; j < resolution; ++j) {
       double v = (double)j / (double)(resolution - 1);
-      auto p = helperSurface.eval(u, v);
-      BaseTraits::Point mp;
-      mp[0] = p[0];
-      mp[1] = p[1];
-      mp[2] = p[2];
-      handles.push_back(mesh.add_vertex(mp));
+      Geometry::VectorMatrix derivatives;
+      helperSurface.eval(u, v, 1, derivatives);
+      BaseTraits::Point mp(derivatives[0][0][0], derivatives[0][0][1], derivatives[0][0][2]);
+      auto vh = mesh.add_vertex(mp);
+      handles.push_back(vh);
+      BaseTraits::Point tan_u(derivatives[1][0][0], derivatives[1][0][1], derivatives[1][0][2]);
+      BaseTraits::Point tan_v(derivatives[0][1][0], derivatives[0][1][1], derivatives[0][1][2]);
+      auto normal = tan_u.cross(tan_v).normalize();
+      analiticNormals.emplace(vh, normal);
     }
   }
   // Build triangles:
@@ -183,23 +188,25 @@ void BSpline::calculateInnerControlPoints() {
     // Iterative rearrangement:
     double epsilon = 0.01;
     double max_change = 1.0;
-    while (max_change > epsilon) {
+    int secondary_counter = 0;
+    while (max_change > epsilon && secondary_counter < 4000) {
+      secondary_counter++;
       std::vector<Vector> prev_cps = control_points;
       max_change = -1.0;
       for (int i = 1; i < no_of_control_points[0] - 1; i++) {
         for (int j = 1; j < no_of_control_points[1] - 1; j++) {
           control_points[cp_index(i, j)]
             = fullness * (
-                  delta(i, j, 1, 0) * prev_cps[cp_index(i - 1, j)]
-                        + delta(i, j, 0, 0) * prev_cps[cp_index(i + 1, j)]
-                          + delta(i, j, 1, 1) * prev_cps[cp_index(i, j - 1)]
-                          + delta(i, j, 0, 1) * prev_cps[cp_index(i, j + 1)]
+                    delta(i, j, 1, 0) * prev_cps[cp_index(i - 1, j)]
+                  + delta(i, j, 0, 0) * prev_cps[cp_index(i + 1, j)]
+                  + delta(i, j, 1, 1) * prev_cps[cp_index(i, j - 1)]
+                  + delta(i, j, 0, 1) * prev_cps[cp_index(i, j + 1)]
               )
               + (1.0 - 2.0 * fullness) * (
-                    delta(i, j, 1, 0) * delta(i, j, 1, 1) * prev_cps[cp_index(i - 1, j - 1)]
-                                          + delta(i, j, 1, 0) * delta(i, j, 0, 1) * prev_cps[cp_index(i - 1, j + 1)]
-                                          + delta(i, j , 0, 0) * delta(i, j, 1, 1) * prev_cps[cp_index(i + 1, j - 1)]
-                                          + delta(i, j, 0, 0) * delta(i, j, 0, 1) * prev_cps[cp_index(i + 1, j + 1)]
+                      delta(i, j, 1, 0) * delta(i, j, 1, 1) * prev_cps[cp_index(i - 1, j - 1)]
+                    + delta(i, j, 1, 0) * delta(i, j, 0, 1) * prev_cps[cp_index(i - 1, j + 1)]
+                    + delta(i, j, 0, 0) * delta(i, j, 1, 1) * prev_cps[cp_index(i + 1, j - 1)]
+                    + delta(i, j, 0, 0) * delta(i, j, 0, 1) * prev_cps[cp_index(i + 1, j + 1)]
               );
             // Find maximal change in current iteration:
             auto diff = control_points[cp_index(i, j)] - prev_cps[cp_index(i, j)];
@@ -209,7 +216,6 @@ void BSpline::calculateInnerControlPoints() {
             }
         }
       }
-      std::cout << "Max change: " << max_change << std::endl;
     }
 }
 
@@ -280,10 +286,22 @@ bool BSpline::reload() {
   return true;
 }
 
+Vector BSpline::normal(BaseMesh::VertexHandle vh) const
+{
+  auto n = analiticNormals.at(vh);
+  //std::cout << "Normal length: " << n.length() << std::endl;
+  return Vector(-n[1], n[2], n[0]);
+}
+
+double BSpline::meanCurvature(BaseMesh::VertexHandle vh) const
+{
+  return 0.5;//analiticCurvature.at(vh);
+}
+
 double BSpline::getFullness() const {
   return fullness;
 }
 
 void BSpline::setFullness(const double f) {
-  fullness = f;
+  fullness = std::max(std::min(f, 1.0), 0.0);
 }

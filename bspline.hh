@@ -29,6 +29,10 @@ public:
   // Used to load the surface from file
   virtual bool reload() override;
 
+  virtual Vector normal(BaseMesh::VertexHandle vh) const override;
+
+  virtual double meanCurvature(BaseMesh::VertexHandle vh) const override;
+
   double getFullness() const;
 
   void setFullness(const double f);
@@ -40,6 +44,8 @@ private:
   std::vector<Vector> control_points;
   double fullness = 0.5;
   size_t cp_index(size_t a, size_t b) const;
+  std::map<BaseMesh::VertexHandle, Vector> analiticNormals;
+  std::map<BaseMesh::VertexHandle, double> analiticCurvature;
 
   void calculateInnerControlPoints();
 
@@ -51,4 +57,6 @@ private:
    * 1 ... positive
   */
   double delta(unsigned int i, unsigned int j, int sign, unsigned int u_or_v) const;
+
+
 };

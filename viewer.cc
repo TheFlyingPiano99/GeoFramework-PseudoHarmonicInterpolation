@@ -15,6 +15,9 @@ Viewer::~Viewer() {
   glDeleteTextures(1, &vis.isophote_texture);
   glDeleteTextures(1, &vis.environment_texture);
   glDeleteTextures(1, &vis.slicing_texture);
+  if (nullptr != slider) {
+    delete slider;
+  }
 }
 
 double Viewer::getCutoffRatio() const {
@@ -66,8 +69,22 @@ bool Viewer::open(std::string filename) {
   std::shared_ptr<Object> surface;
   if (filename.ends_with(".bzr"))
     surface = std::make_shared<Bezier>(filename);
-  else if (filename.ends_with(".dbs"))  // The file should contain the description of a Default B-spline surface.
+  else if (filename.ends_with(".dbs")) { // The file should contain the description of a Default B-spline surface.
     surface = std::make_shared<BSpline>(filename);
+    if (nullptr == slider) {
+        slider = new QSlider();
+    }
+    slider->setFocusPolicy(Qt::StrongFocus);
+    slider->setTickPosition(QSlider::NoTicks);
+    slider->setTickInterval(10);
+    slider->setSingleStep(1);
+    slider->setSliderPosition(50);
+    slider->setParent(this);
+    slider->setToolTip("B-spline surface fullness");
+    BSplineSurface = surface;
+    QObject::connect(slider, &QSlider::sliderMoved, this, &Viewer::onFullnessSliderChange);
+    slider->show();
+  }
   else
     surface = std::make_shared<Mesh>(filename);
   if (!surface->valid())
@@ -76,6 +93,17 @@ bool Viewer::open(std::string filename) {
   updateMeanMinMax();
   setupCamera();
   return true;
+}
+
+void Viewer::onFullnessSliderChange(int val)
+{
+  qInfo() << "Slot called val: " << val << "\n";
+  if (BSplineSurface->valid()) {
+    BSpline* bspline = static_cast<BSpline*>(BSplineSurface.get());
+    bspline->setFullness((double)val * 0.01);
+    bspline->updateBaseMesh();
+    update();
+  }
 }
 
 void Viewer::init() {

@@ -2,6 +2,7 @@
 
 #include <QGLViewer/qglviewer.h>
 #include "object.hh"
+#include <QSlider>
 
 class Viewer : public QGLViewer {
   Q_OBJECT
@@ -28,6 +29,9 @@ signals:
   void midComputation(int percent);
   void endComputation();
 
+public slots:
+  void onFullnessSliderChange(int val);
+
 protected:
   virtual void init() override;
   virtual void draw() override;
@@ -37,6 +41,7 @@ protected:
   virtual void keyPressEvent(QKeyEvent *e) override;
   virtual void mouseMoveEvent(QMouseEvent *e) override;
   virtual QString helpString() const override;
+  std::shared_ptr<Object> BSplineSurface;
 
 private:
   void updateMeanMinMax();
@@ -44,6 +49,7 @@ private:
 
   std::vector<std::shared_ptr<Object>> objects;
   Visualization vis;
+  QSlider* slider = nullptr;
 
   int selected_vertex;
   size_t selected_object;
