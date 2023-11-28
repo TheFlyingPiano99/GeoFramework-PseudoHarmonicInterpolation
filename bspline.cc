@@ -143,13 +143,26 @@ void BSpline::updateBaseMesh() {
       double v = (double)j / (double)(resolution - 1);
       Geometry::VectorMatrix derivatives;
       helperSurface.eval(u, v, 1, derivatives);
+
+      // Vertex:
       BaseTraits::Point mp(derivatives[0][0][0], derivatives[0][0][1], derivatives[0][0][2]);
       auto vh = mesh.add_vertex(mp);
       handles.push_back(vh);
+
+      // Normal:
       BaseTraits::Point tan_u(derivatives[1][0][0], derivatives[1][0][1], derivatives[1][0][2]);
       BaseTraits::Point tan_v(derivatives[0][1][0], derivatives[0][1][1], derivatives[0][1][2]);
-      auto normal = tan_u.cross(tan_v).normalize();
+      auto normal = tan_v.cross(tan_u).normalize();
       analiticNormals.emplace(vh, normal);
+
+      // Mean Curvature:
+      double N = 0.0;
+      double L = 0.0;
+      double G = 0.0;
+      double E = 0.0;
+      double F = 0.0;
+      double M = (N * E - 2.0 * 0) / 2.0 / (E * G - F * F);
+      analiticCurvature.emplace(vh, M);
     }
   }
   // Build triangles:
@@ -289,8 +302,7 @@ bool BSpline::reload() {
 Vector BSpline::normal(BaseMesh::VertexHandle vh) const
 {
   auto n = analiticNormals.at(vh);
-  //std::cout << "Normal length: " << n.length() << std::endl;
-  return Vector(-n[1], n[2], n[0]);
+  return Vector(n[0], n[1], n[2]);
 }
 
 double BSpline::meanCurvature(BaseMesh::VertexHandle vh) const
