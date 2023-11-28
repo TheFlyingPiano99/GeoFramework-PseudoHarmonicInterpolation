@@ -169,7 +169,7 @@ void BSpline::updateBaseMesh() {
       double N = r_vv.dot(normal);
 
       // Mean Curvature:
-      double H = (N * E - 2.0 * M * F + L * G) / 2.0 / (E * G - F * F);
+      double H = 0.5 * (N * E - 2.0 * M * F + L * G) / (E * G - F * F);
       analiticMeanCurvature.emplace(vh, H);
     }
   }
@@ -218,16 +218,16 @@ void BSpline::calculateInnerControlPoints() {
         for (int j = 1; j < no_of_control_points[1] - 1; j++) {
           control_points[cp_index(i, j)]
             = fullness * (
-                    delta(i, j, 1, 0) * prev_cps[cp_index(i - 1, j)]
-                  + delta(i, j, 0, 0) * prev_cps[cp_index(i + 1, j)]
-                  + delta(i, j, 1, 1) * prev_cps[cp_index(i, j - 1)]
-                  + delta(i, j, 0, 1) * prev_cps[cp_index(i, j + 1)]
+                    delta(i, j, 1, 0) * control_points[cp_index(i - 1, j)]
+                  + delta(i, j, 0, 0) * control_points[cp_index(i + 1, j)]
+                  + delta(i, j, 1, 1) * control_points[cp_index(i, j - 1)]
+                  + delta(i, j, 0, 1) * control_points[cp_index(i, j + 1)]
               )
               + (1.0 - 2.0 * fullness) * (
-                      delta(i, j, 1, 0) * delta(i, j, 1, 1) * prev_cps[cp_index(i - 1, j - 1)]
-                    + delta(i, j, 1, 0) * delta(i, j, 0, 1) * prev_cps[cp_index(i - 1, j + 1)]
-                    + delta(i, j, 0, 0) * delta(i, j, 1, 1) * prev_cps[cp_index(i + 1, j - 1)]
-                    + delta(i, j, 0, 0) * delta(i, j, 0, 1) * prev_cps[cp_index(i + 1, j + 1)]
+                      delta(i, j, 1, 0) * delta(i, j, 1, 1) * control_points[cp_index(i - 1, j - 1)]
+                    + delta(i, j, 1, 0) * delta(i, j, 0, 1) * control_points[cp_index(i - 1, j + 1)]
+                    + delta(i, j, 0, 0) * delta(i, j, 1, 1) * control_points[cp_index(i + 1, j - 1)]
+                    + delta(i, j, 0, 0) * delta(i, j, 0, 1) * control_points[cp_index(i + 1, j + 1)]
               );
             // Find maximal change in current iteration:
             auto diff = control_points[cp_index(i, j)] - prev_cps[cp_index(i, j)];
@@ -315,7 +315,7 @@ Vector BSpline::normal(BaseMesh::VertexHandle vh) const
 
 double BSpline::meanCurvature(BaseMesh::VertexHandle vh) const
 {
-  return analiticMeanCurvature.at(vh);
+  return -analiticMeanCurvature.at(vh);
 }
 
 double BSpline::getFullness() const {

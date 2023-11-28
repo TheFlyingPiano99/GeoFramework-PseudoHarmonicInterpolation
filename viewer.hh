@@ -41,7 +41,7 @@ protected:
   virtual void keyPressEvent(QKeyEvent *e) override;
   virtual void mouseMoveEvent(QMouseEvent *e) override;
   virtual QString helpString() const override;
-  std::shared_ptr<Object> BSplineSurface;
+  std::vector<std::shared_ptr<Object>> bSplineSurfaces;
 
 private:
   void updateMeanMinMax();
@@ -49,7 +49,7 @@ private:
 
   std::vector<std::shared_ptr<Object>> objects;
   Visualization vis;
-  QSlider* slider = nullptr;
+  std::unique_ptr<QSlider> slider;
 
   int selected_vertex;
   size_t selected_object;

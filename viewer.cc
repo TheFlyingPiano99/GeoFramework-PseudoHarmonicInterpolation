@@ -16,7 +16,7 @@ Viewer::~Viewer() {
   glDeleteTextures(1, &vis.environment_texture);
   glDeleteTextures(1, &vis.slicing_texture);
   if (nullptr != slider) {
-    delete slider;
+    slider->deleteLater();
   }
 }
 
@@ -63,6 +63,8 @@ void Viewer::setSlicingScaling(double scaling) {
 
 void Viewer::deleteObjects() {
   objects.clear();
+  bSplineSurfaces.clear();
+  slider;
 }
 
 bool Viewer::open(std::string filename) {
@@ -71,19 +73,19 @@ bool Viewer::open(std::string filename) {
     surface = std::make_shared<Bezier>(filename);
   else if (filename.ends_with(".dbs")) { // The file should contain the description of a Default B-spline surface.
     surface = std::make_shared<BSpline>(filename);
-    if (nullptr == slider) {
-        slider = new QSlider();
+    bSplineSurfaces.push_back(surface);
+    if (nullptr == slider.get()) {
+        slider = std::make_unique<QSlider>();
+        slider->setFocusPolicy(Qt::StrongFocus);
+        slider->setTickPosition(QSlider::NoTicks);
+        slider->setTickInterval(10);
+        slider->setSingleStep(1);
+        slider->setSliderPosition(50);
+        slider->setParent(this);
+        slider->setToolTip("B-spline surface fullness");
+        QObject::connect(slider.get(), &QSlider::sliderMoved, this, &Viewer::onFullnessSliderChange);
+        slider->show();
     }
-    slider->setFocusPolicy(Qt::StrongFocus);
-    slider->setTickPosition(QSlider::NoTicks);
-    slider->setTickInterval(10);
-    slider->setSingleStep(1);
-    slider->setSliderPosition(50);
-    slider->setParent(this);
-    slider->setToolTip("B-spline surface fullness");
-    BSplineSurface = surface;
-    QObject::connect(slider, &QSlider::sliderMoved, this, &Viewer::onFullnessSliderChange);
-    slider->show();
   }
   else
     surface = std::make_shared<Mesh>(filename);
@@ -97,12 +99,13 @@ bool Viewer::open(std::string filename) {
 
 void Viewer::onFullnessSliderChange(int val)
 {
-  qInfo() << "Slot called val: " << val << "\n";
-  if (BSplineSurface->valid()) {
-    BSpline* bspline = static_cast<BSpline*>(BSplineSurface.get());
-    bspline->setFullness((double)val * 0.01);
-    bspline->updateBaseMesh();
-    update();
+  for (auto& spline : bSplineSurfaces) {
+    if (nullptr != spline) {
+        BSpline* bspline = static_cast<BSpline*>(spline.get());
+        bspline->setFullness((double)val * 0.01);
+        bspline->updateBaseMesh();
+        update();
+    }
   }
 }
 
