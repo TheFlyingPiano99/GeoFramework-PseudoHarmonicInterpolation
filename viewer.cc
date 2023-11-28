@@ -64,7 +64,7 @@ void Viewer::setSlicingScaling(double scaling) {
 void Viewer::deleteObjects() {
   objects.clear();
   bSplineSurfaces.clear();
-  slider;
+  slider.reset();
 }
 
 bool Viewer::open(std::string filename) {
