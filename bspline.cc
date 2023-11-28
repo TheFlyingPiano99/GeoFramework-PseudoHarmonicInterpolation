@@ -2,6 +2,7 @@
 
 #include "bspline.hh"
 #include "bsplineHelper.hh"
+#include <QDebug>
 
 BSpline::BSpline(std::string filename) : Object(filename) {
   reload();
@@ -262,7 +263,10 @@ bool BSpline::reload() {
     std::cout << "U degree: " << degree[0] << " V degree: " << degree[1] << std::endl;
     f >> no_of_control_points[0] >> no_of_control_points[1];
     std::cout << "U No. of cps: " << no_of_control_points[0] << " V No. of cps: " << no_of_control_points[1] << std::endl;
+    control_points.clear();
     control_points.resize(no_of_control_points[0] * no_of_control_points[1]);
+    knots[0].clear();
+    knots[1].clear();
     for (size_t i = 0; i <= no_of_control_points[0] + degree[0]; i++) {
       float knot;
       f >> knot;
