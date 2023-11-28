@@ -45,7 +45,7 @@ private:
   double fullness = 0.5;
   size_t cp_index(size_t a, size_t b) const;
   std::map<BaseMesh::VertexHandle, Vector> analiticNormals;
-  std::map<BaseMesh::VertexHandle, double> analiticCurvature;
+  std::map<BaseMesh::VertexHandle, double> analiticMeanCurvature;
 
   void calculateInnerControlPoints();
 

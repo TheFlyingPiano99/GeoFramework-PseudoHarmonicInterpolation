@@ -126,7 +126,7 @@ void BSpline::updateBaseMesh() {
 
   mesh.clear();
   analiticNormals.clear();
-  analiticCurvature.clear();
+  analiticMeanCurvature.clear();
   std::vector<BaseMesh::VertexHandle> handles, tri;
 
   std::vector<Geometry::Vector3D> cps;
@@ -142,7 +142,7 @@ void BSpline::updateBaseMesh() {
     for (size_t j = 0; j < resolution; ++j) {
       double v = (double)j / (double)(resolution - 1);
       Geometry::VectorMatrix derivatives;
-      helperSurface.eval(u, v, 1, derivatives);
+      helperSurface.eval(u, v, 2, derivatives);
 
       // Vertex:
       BaseTraits::Point mp(derivatives[0][0][0], derivatives[0][0][1], derivatives[0][0][2]);
@@ -152,17 +152,25 @@ void BSpline::updateBaseMesh() {
       // Normal:
       BaseTraits::Point tan_u(derivatives[1][0][0], derivatives[1][0][1], derivatives[1][0][2]);
       BaseTraits::Point tan_v(derivatives[0][1][0], derivatives[0][1][1], derivatives[0][1][2]);
-      auto normal = tan_v.cross(tan_u).normalize();
+      auto normal = tan_u.cross(tan_v).normalize();
       analiticNormals.emplace(vh, normal);
 
+      // Values of first fundamental form:
+      double E = tan_u.dot(tan_u);
+      double F = tan_u.dot(tan_v);
+      double G = tan_v.dot(tan_v);
+
+      // Values of second fundamental form:
+      BaseTraits::Point r_uu(derivatives[2][0][0], derivatives[2][0][1],derivatives[2][0][2]);
+      BaseTraits::Point r_uv(derivatives[1][1][0], derivatives[1][1][1],derivatives[1][1][2]);
+      BaseTraits::Point r_vv(derivatives[0][2][0], derivatives[0][2][1],derivatives[0][2][2]);
+      double L = r_uu.dot(normal);
+      double M = r_uv.dot(normal);
+      double N = r_vv.dot(normal);
+
       // Mean Curvature:
-      double N = 0.0;
-      double L = 0.0;
-      double G = 0.0;
-      double E = 0.0;
-      double F = 0.0;
-      double M = (N * E - 2.0 * 0) / 2.0 / (E * G - F * F);
-      analiticCurvature.emplace(vh, M);
+      double H = (N * E - 2.0 * M * F + L * G) / 2.0 / (E * G - F * F);
+      analiticMeanCurvature.emplace(vh, H);
     }
   }
   // Build triangles:
@@ -302,12 +310,12 @@ bool BSpline::reload() {
 Vector BSpline::normal(BaseMesh::VertexHandle vh) const
 {
   auto n = analiticNormals.at(vh);
-  return Vector(n[0], n[1], n[2]);
+  return -Vector(n[0], n[1], n[2]);
 }
 
 double BSpline::meanCurvature(BaseMesh::VertexHandle vh) const
 {
-  return 0.5;//analiticCurvature.at(vh);
+  return analiticMeanCurvature.at(vh);
 }
 
 double BSpline::getFullness() const {
