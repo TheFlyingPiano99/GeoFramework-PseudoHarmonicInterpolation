@@ -36,6 +36,7 @@ public:
 
 
 private:
+
   std::function<BaseTraits::Point(double t)> curve; // t in [0, 1] -> R^2 (z coordinate is ignored)
   std::function<double(double x, double y)> height;
 };

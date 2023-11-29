@@ -31,6 +31,83 @@ void PseudoHarmonicSurface::drawWithNames(const Visualization &vis) const {
   // No movable control points are drawn
 }
 
+struct triangulateio triangulateClosedShape(const std::vector<Geometry::Point2D>& points_) {
+  // Input points
+  size_t n = points_.size();
+  Geometry::DoubleVector points; points.reserve(2 * n);
+  for (const auto& p : points_) {
+      points.push_back(p[0]);
+      points.push_back(p[1]);
+  }
+
+  // Input segments : just a closed polygon
+  std::vector<int> segments; segments.reserve(2 * n);
+  for (size_t i = 0; i < n; ++i) {
+      segments.push_back(i);
+      segments.push_back(i + 1);
+  }
+  segments.back() = 0;
+
+  // Setup output data structure
+  struct triangulateio in, out;
+  in.edgelist = nullptr;
+  in.edgemarkerlist = nullptr;
+  in.holelist = nullptr;
+  in.neighborlist = nullptr;
+  in.normlist = nullptr;
+  in.numberofcorners = 0;
+  in.numberofedges = 0;
+  in.pointlist = &points[0];
+  in.numberofpoints = n;
+  in.numberofpointattributes = 0;
+  in.pointmarkerlist = nullptr;
+  in.segmentlist = &segments[0];
+  in.numberofsegments = n;
+  in.segmentmarkerlist = nullptr;
+  in.numberofholes = 0;
+  in.numberofregions = 0;
+  in.numberoftriangleattributes = 0;
+  in.numberoftriangles = 0;
+  in.trianglelist = nullptr;
+
+  // Setup output data structure
+  out.edgelist = nullptr;
+  out.edgemarkerlist = nullptr;
+  out.holelist = nullptr;
+  out.neighborlist = nullptr;
+  out.normlist = nullptr;
+  out.numberofcorners = 0;
+  out.numberofedges = 0;
+  out.numberofholes = 0;
+  out.numberofregions = 0;
+  out.numberofsegments = 0;
+  out.numberofpointattributes = 0;
+  out.numberofpoints = 0;
+  out.pointlist = nullptr;
+  out.pointattributelist = nullptr;
+  out.pointmarkerlist = nullptr;
+  out.trianglelist = nullptr;
+  out.triangleattributelist = nullptr;
+  out.segmentlist = nullptr;
+  out.segmentmarkerlist = nullptr;
+
+  // Call the library function [with maximum triangle area = resolution]
+  std::ostringstream cmd;
+  int resolution = 50;
+  cmd << "pqa" << std::fixed << resolution << "DBPzQ";
+
+  qInfo() << "Triangulation started.";
+  triangulate(const_cast<char*>(cmd.str().c_str()), &in, &out, (struct triangulateio*)nullptr);
+  qInfo() << "Triangulation finished.";
+
+  // Now the result is:
+  // - out.numberofpoints
+  // - out.pointlist (stored in the format x0,y0,x1,y1,x2,y2,...)
+  // - out.numberoftriangles
+  // - out.trianglelist (stored in the format T0a,T0b,T0c,T1a,T1b,T1c,T2a,T2b,T2c,...)
+
+  return out;
+}
 
 void PseudoHarmonicSurface::updateBaseMesh() {
 
@@ -53,79 +130,15 @@ void PseudoHarmonicSurface::updateBaseMesh() {
     Geometry::Point2D max = helperSurface.getBoundingRectangleMax();
 
     const auto& discretizedCurve = helperSurface.getDiscretizedCurve();
-    // Input points
-    size_t n = discretizedCurve.size();
-    Geometry::DoubleVector points; points.reserve(2 * n);
-    for (const auto& p : discretizedCurve) {
-        points.push_back(p[0]);
-        points.push_back(p[1]);
-    }
+    //auto out = triangulateClosedShape(discretizedCurve);
 
-    // Input segments : just a closed polygon
-    std::vector<int> segments; segments.reserve(2 * n);
-    for (size_t i = 0; i < n; ++i) {
-        segments.push_back(i);
-        segments.push_back(i + 1);
-    }
-    segments.back() = 0;
-
-    // Setup output data structure
-    struct triangulateio in, out;
-    in.edgelist = nullptr;
-    in.edgemarkerlist = nullptr;
-    in.holelist = nullptr;
-    in.neighborlist = nullptr;
-    in.normlist = nullptr;
-    in.numberofcorners = 0;
-    in.numberofedges = 0;
-    in.pointlist = &points[0];
-    in.numberofpoints = n;
-    in.numberofpointattributes = 0;
-    in.pointmarkerlist = nullptr;
-    in.segmentlist = &segments[0];
-    in.numberofsegments = n;
-    in.segmentmarkerlist = nullptr;
-    in.numberofholes = 0;
-    in.numberofregions = 0;
-    in.numberoftriangleattributes = 0;
-    in.numberoftriangles = 0;
-    in.trianglelist = nullptr;
-
-    // Setup output data structure
-    out.edgelist = nullptr;
-    out.edgemarkerlist = nullptr;
-    out.holelist = nullptr;
-    out.neighborlist = nullptr;
-    out.normlist = nullptr;
-    out.numberofcorners = 0;
-    out.numberofedges = 0;
-    out.numberofholes = 0;
-    out.numberofregions = 0;
-    out.numberofsegments = 0;
-    out.numberofpointattributes = 0;
-    out.numberofpoints = 0;
-    out.pointlist = nullptr;
-    out.pointattributelist = nullptr;
-    out.pointmarkerlist = nullptr;
-    out.trianglelist = nullptr;
-    out.triangleattributelist = nullptr;
-    out.segmentlist = nullptr;
-    out.segmentmarkerlist = nullptr;
-
-    // Call the library function [with maximum triangle area = resolution]
-    std::ostringstream cmd;
-    cmd << "pqa" << std::fixed << resolution << "DBPzQ";
-
-    qInfo() << "Triangulation started.";
-    triangulate(const_cast<char*>(cmd.str().c_str()), &in, &out, (struct triangulateio*)nullptr);
-    qInfo() << "Triangulation finished.";
-
-    // Now the result is:
-    // - out.numberofpoints
-    // - out.pointlist (stored in the format x0,y0,x1,y1,x2,y2,...)
-    // - out.numberoftriangles
-    // - out.trianglelist (stored in the format T0a,T0b,T0c,T1a,T1b,T1c,T2a,T2b,T2c,...)
-
+    // Test:
+    std::vector<Geometry::Point2D> points;
+    points.push_back(Geometry::Point2D(0,0));
+    points.push_back(Geometry::Point2D(1,0));
+    points.push_back(Geometry::Point2D(1,1));
+    points.push_back(Geometry::Point2D(0,1));
+    auto out = triangulateClosedShape(points);
 
     // Sample surface:
     for (size_t i = 0; i < out.numberofpoints; i++) {
