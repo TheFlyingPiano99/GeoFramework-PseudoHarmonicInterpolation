@@ -56,7 +56,27 @@ void Geometry::ModifiedGordonWixomSurface::discretizeCurve()
     discretizedCurve.clear();
     constexpr int n = 128;
     for (int i = 0; i < n; i++) {
-        discretizedCurve.push_back(curve(i / (double)n));
+        Point2D p = curve(i / (double)n);
+        discretizedCurve.push_back(p);
+        // Update min and max:
+        if (0 == i) {
+            boundingRectangleMin = p;
+            boundingRectangleMax = p;
+        }
+        else {
+            if (boundingRectangleMin[0] > p[0]) {
+                boundingRectangleMin[0] = p[0];
+            }
+            if (boundingRectangleMin[1] > p[1]) {
+                boundingRectangleMin[1] = p[1];
+            }
+            if (boundingRectangleMax[0] < p[0]) {
+                boundingRectangleMax[0] = p[0];
+            }
+            if (boundingRectangleMax[1] < p[1]) {
+                boundingRectangleMax[1] = p[1];
+            }
+        }
     }
 }
 
@@ -74,8 +94,8 @@ std::vector<Geometry::Point2D> Geometry::ModifiedGordonWixomSurface::findLineCur
             continue;
         }
         Vector2D sectionDir = sectionDiff / sectionLength;
-        double t = x[1] / sectionDir[1] + direction[1] / (direction[0] * sectionDir[1])
-                                              * (p0[0] - x[0]) - p0[1] / sectionDir[1];
+        double t = (p0[1] - x[1] - direction[1] * (p0[0] - x[0]) / direction[0])
+                   / (direction[1] * sectionDir[0] / direction[0] - sectionDir[1]);
         if (t >= 0 && t < sectionLength) {
             intersection_points.push_back(p0 + sectionDir * t);
         }
@@ -83,3 +103,12 @@ std::vector<Geometry::Point2D> Geometry::ModifiedGordonWixomSurface::findLineCur
     return intersection_points;
 }
 
+Geometry::Point2D Geometry::ModifiedGordonWixomSurface::getBoundingRectangleMin() const
+{
+    return boundingRectangleMin;
+}
+
+Geometry::Point2D Geometry::ModifiedGordonWixomSurface::getBoundingRectangleMax() const
+{
+    return boundingRectangleMax;
+}

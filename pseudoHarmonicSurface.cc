@@ -27,7 +27,7 @@ void PseudoHarmonicSurface::drawWithNames(const Visualization &vis) const {
 
 void PseudoHarmonicSurface::updateBaseMesh() {
 
-    size_t resolution = 50;
+    size_t resolution = 60;
 
     // Clear previous data:
     mesh.clear();
@@ -42,16 +42,29 @@ void PseudoHarmonicSurface::updateBaseMesh() {
         return this->height(x[0], x[1]);
         };
     auto helperSurface = Geometry::ModifiedGordonWixomSurface(f_c, f_h);
-
+    Geometry::Point2D min = helperSurface.getBoundingRectangleMin();
+    Geometry::Point2D max = helperSurface.getBoundingRectangleMax();
     // Sample surface:
     for (size_t i = 0; i < resolution; ++i) {
         double u = (double)i / (double)(resolution - 1);
-        for (size_t j = 0; j < resolution; ++j) {
-            double v = (double)j / (double)(resolution - 1);
-            auto x = Geometry::Point2D(2.0 * u - 1.0, 2.0 * v - 1.0);
-            double height = helperSurface.eval(x);
-            auto vhd = mesh.add_vertex(BaseTraits::Point(x[0], x[1], height));
-            handles.push_back(vhd);
+        auto x = Geometry::Point2D((1.0 - u) * min[0] + u * max[0], 0);
+        qInfo() << x[0] << ", " << x[1];
+        auto intersections = helperSurface.findLineCurveIntersections(x, Geometry::Vector2D(std::cos(M_PI * 0.499), std::sin(M_PI * 0.499)));
+        qInfo() << intersections.size();
+        if (intersections.size() % 2 != 0) {
+            continue;
+        }
+        for (int j = 0; j < (int)intersections.size() - 1; j += 2) {
+            double sub_min_y = intersections[j][1];
+            double sub_max_y = intersections[j + 1][1];
+            int sub_resolution = resolution / intersections.size() * 2;
+            for (size_t k = 0; k < sub_resolution; ++k) {
+                double v = (double)k / (double)(sub_resolution - 1);
+                x[1] = (1.0 - v) * sub_min_y + v * sub_max_y;
+                double height = helperSurface.eval(x);
+                auto vhd = mesh.add_vertex(BaseTraits::Point(x[0], x[1], height));
+                handles.push_back(vhd);
+            }
         }
     }
     // Build triangles:

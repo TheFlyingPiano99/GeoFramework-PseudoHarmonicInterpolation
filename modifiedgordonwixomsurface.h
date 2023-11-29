@@ -25,9 +25,14 @@ namespace Geometry {
     */
     std::vector<Point2D> findLineCurveIntersections(const Point2D& x, const Vector2D& direction);
 
-  private:
-    void discretizeCurve();
+    Point2D getBoundingRectangleMin() const;
 
+    Point2D getBoundingRectangleMax() const;
+
+private:
+    void discretizeCurve();
+    Point2D boundingRectangleMin;
+    Point2D boundingRectangleMax;
     std::function<Geometry::Point2D(double)> curve;
     std::function<double(Point2D)> height;
     std::vector<Point2D> discretizedCurve;
