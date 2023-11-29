@@ -3,7 +3,7 @@
 #include "bezier.hh"
 #include "mesh.hh"
 #include "viewer.hh"
-#include "bspline.hh"
+//#include "bspline.hh"
 
 Viewer::Viewer(QWidget *parent) : QGLViewer(parent) {
   setSelectRegionWidth(10);
@@ -15,9 +15,11 @@ Viewer::~Viewer() {
   glDeleteTextures(1, &vis.isophote_texture);
   glDeleteTextures(1, &vis.environment_texture);
   glDeleteTextures(1, &vis.slicing_texture);
+  /*
   if (nullptr != slider) {
     slider->deleteLater();
   }
+*/
 }
 
 double Viewer::getCutoffRatio() const {
@@ -64,13 +66,15 @@ void Viewer::setSlicingScaling(double scaling) {
 void Viewer::deleteObjects() {
   objects.clear();
   bSplineSurfaces.clear();
-  slider.reset();
+  //slider.reset();
+  harmonicSurface.reset();
 }
 
 bool Viewer::open(std::string filename) {
   std::shared_ptr<Object> surface;
   if (filename.ends_with(".bzr"))
     surface = std::make_shared<Bezier>(filename);
+  /*
   else if (filename.ends_with(".dbs")) { // The file should contain the description of a Default B-spline surface.
     surface = std::make_shared<BSpline>(filename);
     bSplineSurfaces.push_back(surface);
@@ -87,6 +91,7 @@ bool Viewer::open(std::string filename) {
         slider->show();
     }
   }
+    */
   else
     surface = std::make_shared<Mesh>(filename);
   if (!surface->valid())
@@ -97,6 +102,7 @@ bool Viewer::open(std::string filename) {
   return true;
 }
 
+/*
 void Viewer::onFullnessSliderChange(int val)
 {
   for (auto& spline : bSplineSurfaces) {
@@ -108,6 +114,7 @@ void Viewer::onFullnessSliderChange(int val)
     }
   }
 }
+*/
 
 void Viewer::init() {
   glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 1);
@@ -304,6 +311,24 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
       camera()->showEntireScene();
       update();
       break;
+    case Qt::Key_B:
+    {
+      qInfo() << "Pressed B\n";
+      std::function<BaseTraits::Point(double)> curve(
+          [](double t){
+              return BaseTraits::Point{5.0 * std::cos(t), 5.0 * std::sin(t), 0.0};
+          }
+          );
+      std::function<double(double, double)> height(
+          [](double x, double y){
+              return std::sin(x * 10.0) * std::sin(y * 5.0);
+          }
+          );
+      harmonicSurface = std::make_shared<PseudoHarmonicSurface>(curve, height);
+      objects.push_back(harmonicSurface);
+      update();
+      break;
+    }
     default:
       QGLViewer::keyPressEvent(e);
     }

@@ -113,6 +113,11 @@ Vector2D::normalized() const {
   return Vector2D(*this).normalize();
 }
 
+double Vector2D::length() const
+{
+  return std::sqrt(v_[0] * v_[0] + v_[1] * v_[1]);
+}
+
 std::ostream &operator<<(std::ostream &os, const Vector2D &v) {
   os << v[0] << ' ' << v[1];
   return os;
@@ -242,6 +247,16 @@ Vector3D::normalize() {
 Vector3D
 Vector3D::normalized() const {
   return Vector3D(*this).normalize();
+}
+
+double Vector3D::length() const
+{
+  return std::sqrt(v_[0] * v_[0] + v_[1] * v_[1] + v_[2] * v_[2]);
+}
+
+double Vector3D::dot(const Vector3D& v) const
+{
+  return v_[0] * v[0] + v_[1] * v[1] + v_[2] * v[2];
 }
 
 std::ostream &operator<<(std::ostream &os, const Vector3D &v) {

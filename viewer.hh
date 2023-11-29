@@ -3,6 +3,7 @@
 #include <QGLViewer/qglviewer.h>
 #include "object.hh"
 #include <QSlider>
+#include "pseudoHarmonicSurface.hh"
 
 class Viewer : public QGLViewer {
   Q_OBJECT
@@ -30,7 +31,7 @@ signals:
   void endComputation();
 
 public slots:
-  void onFullnessSliderChange(int val);
+  //void onFullnessSliderChange(int val);
 
 protected:
   virtual void init() override;
@@ -49,7 +50,8 @@ private:
 
   std::vector<std::shared_ptr<Object>> objects;
   Visualization vis;
-  std::unique_ptr<QSlider> slider;
+  //std::unique_ptr<QSlider> slider;
+  std::shared_ptr<PseudoHarmonicSurface> harmonicSurface;
 
   int selected_vertex;
   size_t selected_object;

@@ -8,7 +8,7 @@
 
 namespace Geometry {
 
-const double epsilon = 1.0e-8;
+inline const double epsilon = 1.0e-8;
 
 class Vector2D;
 class Vector3D;
@@ -60,6 +60,9 @@ public:
   Vector2D &normalize();
   Vector2D normalized() const;
 
+  // Extra:
+  double length() const;
+
 private:
   std::array<double, 2> v_;
 };
@@ -100,6 +103,11 @@ public:
   double normSqr() const;
   Vector3D &normalize();
   Vector3D normalized() const;
+
+  // Extension:
+  double length() const;
+
+  double dot(const Vector3D& v) const;
 
 private:
   std::array<double, 3> v_;
