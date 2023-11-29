@@ -18,7 +18,7 @@ double Geometry::ModifiedGordonWixomSurface::eval(const Point2D &x)
         Vector2D direction(std::cos(i * delta_theta), std::sin(i * delta_theta));
         auto intersections = findLineCurveIntersections(x, direction);
         if (2 > intersections.size()) {
-            return 0.0;
+            continue;
         }
         double a = 0.0;
         double b = 0.0;
@@ -36,8 +36,8 @@ double Geometry::ModifiedGordonWixomSurface::eval(const Point2D &x)
         integral_den += a / b * c * delta_theta;
         integral_div += c * delta_theta;
     }
-
-    return integral_den / integral_div;
+    double u = integral_den / integral_div;
+    return u;
 }
 
 void Geometry::ModifiedGordonWixomSurface::setCurve(const std::function<Point2D(double)> &_curve)
@@ -64,26 +64,22 @@ std::vector<Geometry::Point2D> Geometry::ModifiedGordonWixomSurface::findLineCur
     const Point2D& x, const Vector2D& direction
 )
 {
-    /*
-    double n_dot_p = planeNormal.dot(Point(planePoint);
     std::vector<Point2D> intersection_points;
     for (int i = 0; i < discretizedCurve.size(); i++){
-        Point3D p0 = discretizedCurve[i];
-        Point3D p1 = (i == discretizedCurve.size() - 1)? discretizedCurve[0] : discretizedCurve[i + 1];
-        Point3D sectionDiff = p1 - p0;
+        Point2D p0 = discretizedCurve[i];
+        Point2D p1 = (i == discretizedCurve.size() - 1)? discretizedCurve[0] : discretizedCurve[i + 1];
+        Point2D sectionDiff = p1 - p0;
         double sectionLength = sectionDiff.length();
         if (sectionLength < std::numeric_limits<double>::min()) {
             continue;
         }
-        Vector3D sectionDir = sectionDiff / sectionLength;
-        double t = (n_dot_p - planeNormal.dot(p0)) / planeNormal.dot(sectionDir);
+        Vector2D sectionDir = sectionDiff / sectionLength;
+        double t = x[1] / sectionDir[1] + direction[1] / (direction[0] * sectionDir[1])
+                                              * (p0[0] - x[0]) - p0[1] / sectionDir[1];
         if (t >= 0 && t < sectionLength) {
             intersection_points.push_back(p0 + sectionDir * t);
         }
     }
-    return intersection_points;
-    */
-    std::vector<Point2D> intersection_points;
     return intersection_points;
 }
 

@@ -118,6 +118,11 @@ double Vector2D::length() const
   return std::sqrt(v_[0] * v_[0] + v_[1] * v_[1]);
 }
 
+double Vector2D::dot(const Vector2D &v) const
+{
+  return v_[0] * v[0] + v_[1] * v[1];
+}
+
 std::ostream &operator<<(std::ostream &os, const Vector2D &v) {
   os << v[0] << ' ' << v[1];
   return os;

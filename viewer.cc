@@ -313,15 +313,14 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
       break;
     case Qt::Key_B:
     {
-      qInfo() << "Pressed B\n";
       std::function<BaseTraits::Point(double)> curve(
           [](double t){
-              return BaseTraits::Point{5.0 * std::cos(t), 5.0 * std::sin(t), 0.0};
+              return BaseTraits::Point{1.0 * std::cos(t * M_PI * 2.0), 1.0 * std::sin(t * M_PI * 2.0), 0.0};
           }
           );
       std::function<double(double, double)> height(
           [](double x, double y){
-              return std::sin(x * 10.0) * std::sin(y * 5.0);
+              return 0.5 * std::sin(x * 10.0) /* + 1 * std::sin(y * 2.0)*/;
           }
           );
       harmonicSurface = std::make_shared<PseudoHarmonicSurface>(curve, height);

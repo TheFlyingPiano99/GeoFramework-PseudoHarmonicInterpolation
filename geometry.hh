@@ -63,6 +63,8 @@ public:
   // Extra:
   double length() const;
 
+  double dot(const Vector2D& v) const;
+
 private:
   std::array<double, 2> v_;
 };

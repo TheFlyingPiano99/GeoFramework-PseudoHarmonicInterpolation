@@ -34,21 +34,21 @@ void PseudoHarmonicSurface::updateBaseMesh() {
     std::vector<BaseMesh::VertexHandle> handles, tri;
 
     // Create helper surface:
-    std::function<Geometry::Point2D(double)> f1 = [this](double t) {
+    std::function<Geometry::Point2D(double)> f_c = [this](double t) {
         auto p = this->curve(t);
         return Geometry::Point2D(p[0], p[1]);
     };
-    std::function<double(Geometry::Point2D)> f2 = [this](Geometry::Point2D x) {
+    std::function<double(Geometry::Point2D)> f_h = [this](Geometry::Point2D x) {
         return this->height(x[0], x[1]);
         };
-    auto helperSurface = Geometry::ModifiedGordonWixomSurface(f1, f2);
+    auto helperSurface = Geometry::ModifiedGordonWixomSurface(f_c, f_h);
 
     // Sample surface:
     for (size_t i = 0; i < resolution; ++i) {
         double u = (double)i / (double)(resolution - 1);
         for (size_t j = 0; j < resolution; ++j) {
             double v = (double)j / (double)(resolution - 1);
-            auto x = Geometry::Point2D(u, v);
+            auto x = Geometry::Point2D(2.0 * u - 1.0, 2.0 * v - 1.0);
             double height = helperSurface.eval(x);
             auto vhd = mesh.add_vertex(BaseTraits::Point(x[0], x[1], height));
             handles.push_back(vhd);
