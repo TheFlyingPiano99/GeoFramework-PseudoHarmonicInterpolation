@@ -315,7 +315,7 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
     {
       std::function<BaseTraits::Point(double)> curve(
           [](double t){
-              return BaseTraits::Point{1.0 * std::cos(t * M_PI * 2.0), 1.0 * std::sin(t * M_PI * 2.0), 0.0};
+              return BaseTraits::Point{/*(0.25 * std::cos(t * M_PI * 8.0) + 1) * */std::cos(t * M_PI * 2.0), /*(0.25 * std::cos(t * M_PI * 8.0) + 1) * */std::sin(t * M_PI * 2.0), 0.0};
           }
           );
       std::function<double(double, double)> height(
@@ -323,6 +323,18 @@ void Viewer::keyPressEvent(QKeyEvent *e) {
               return 0.5 * std::sin(x * 10.0) /* + 1 * std::sin(y * 2.0)*/;
           }
           );
+      /*
+      std::function<BaseTraits::Point(double)> curve(
+          [](double t){
+              return BaseTraits::Point{std::cos(t * M_PI * 2.0), std::sin(t * M_PI * 2.0), 0.0};
+          }
+          );
+      std::function<double(double, double)> height(
+          [](double x, double y){
+              return 0.5 * std::sin(x * 10.0);
+          }
+          );
+      */
       harmonicSurface = std::make_shared<PseudoHarmonicSurface>(curve, height);
       objects.push_back(harmonicSurface);
       update();

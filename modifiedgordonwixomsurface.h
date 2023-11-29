@@ -29,6 +29,8 @@ namespace Geometry {
 
     Point2D getBoundingRectangleMax() const;
 
+    const std::vector<Point2D>& getDiscretizedCurve() const;
+
 private:
     void discretizeCurve();
     Point2D boundingRectangleMin;

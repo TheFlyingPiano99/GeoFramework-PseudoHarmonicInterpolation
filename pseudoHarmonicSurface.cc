@@ -2,6 +2,13 @@
 
 #include "pseudoHarmonicSurface.hh"
 #include <QDebug>
+#define ANSI_DECLARATORS
+#define REAL double
+#define VOID void
+extern "C" {
+#include <triangle/triangle.h>
+}
+
 
 PseudoHarmonicSurface::PseudoHarmonicSurface(
     const std::function<BaseTraits::Point(double t)>& curve,
@@ -44,43 +51,98 @@ void PseudoHarmonicSurface::updateBaseMesh() {
     auto helperSurface = Geometry::ModifiedGordonWixomSurface(f_c, f_h);
     Geometry::Point2D min = helperSurface.getBoundingRectangleMin();
     Geometry::Point2D max = helperSurface.getBoundingRectangleMax();
-    // Sample surface:
-    for (size_t i = 0; i < resolution; ++i) {
-        double u = (double)i / (double)(resolution - 1);
-        auto x = Geometry::Point2D((1.0 - u) * min[0] + u * max[0], 0);
-        qInfo() << x[0] << ", " << x[1];
-        auto intersections = helperSurface.findLineCurveIntersections(x, Geometry::Vector2D(std::cos(M_PI * 0.499), std::sin(M_PI * 0.499)));
-        qInfo() << intersections.size();
-        if (intersections.size() % 2 != 0) {
-            continue;
-        }
-        for (int j = 0; j < (int)intersections.size() - 1; j += 2) {
-            double sub_min_y = intersections[j][1];
-            double sub_max_y = intersections[j + 1][1];
-            int sub_resolution = resolution / intersections.size() * 2;
-            for (size_t k = 0; k < sub_resolution; ++k) {
-                double v = (double)k / (double)(sub_resolution - 1);
-                x[1] = (1.0 - v) * sub_min_y + v * sub_max_y;
-                double height = helperSurface.eval(x);
-                auto vhd = mesh.add_vertex(BaseTraits::Point(x[0], x[1], height));
-                handles.push_back(vhd);
-            }
-        }
+
+    const auto& discretizedCurve = helperSurface.getDiscretizedCurve();
+    // Input points
+    size_t n = discretizedCurve.size();
+    Geometry::DoubleVector points; points.reserve(2 * n);
+    for (const auto& p : discretizedCurve) {
+        points.push_back(p[0]);
+        points.push_back(p[1]);
     }
+
+    // Input segments : just a closed polygon
+    std::vector<int> segments; segments.reserve(2 * n);
+    for (size_t i = 0; i < n; ++i) {
+        segments.push_back(i);
+        segments.push_back(i + 1);
+    }
+    segments.back() = 0;
+
+    // Setup output data structure
+    struct triangulateio in, out;
+    in.edgelist = nullptr;
+    in.edgemarkerlist = nullptr;
+    in.holelist = nullptr;
+    in.neighborlist = nullptr;
+    in.normlist = nullptr;
+    in.numberofcorners = 0;
+    in.numberofedges = 0;
+    in.pointlist = &points[0];
+    in.numberofpoints = n;
+    in.numberofpointattributes = 0;
+    in.pointmarkerlist = nullptr;
+    in.segmentlist = &segments[0];
+    in.numberofsegments = n;
+    in.segmentmarkerlist = nullptr;
+    in.numberofholes = 0;
+    in.numberofregions = 0;
+    in.numberoftriangleattributes = 0;
+    in.numberoftriangles = 0;
+    in.trianglelist = nullptr;
+
+    // Setup output data structure
+    out.edgelist = nullptr;
+    out.edgemarkerlist = nullptr;
+    out.holelist = nullptr;
+    out.neighborlist = nullptr;
+    out.normlist = nullptr;
+    out.numberofcorners = 0;
+    out.numberofedges = 0;
+    out.numberofholes = 0;
+    out.numberofregions = 0;
+    out.numberofsegments = 0;
+    out.numberofpointattributes = 0;
+    out.numberofpoints = 0;
+    out.pointlist = nullptr;
+    out.pointattributelist = nullptr;
+    out.pointmarkerlist = nullptr;
+    out.trianglelist = nullptr;
+    out.triangleattributelist = nullptr;
+    out.segmentlist = nullptr;
+    out.segmentmarkerlist = nullptr;
+
+    // Call the library function [with maximum triangle area = resolution]
+    std::ostringstream cmd;
+    cmd << "pqa" << std::fixed << resolution << "DBPzQ";
+
+    qInfo() << "Triangulation started.";
+    triangulate(const_cast<char*>(cmd.str().c_str()), &in, &out, (struct triangulateio*)nullptr);
+    qInfo() << "Triangulation finished.";
+
+    // Now the result is:
+    // - out.numberofpoints
+    // - out.pointlist (stored in the format x0,y0,x1,y1,x2,y2,...)
+    // - out.numberoftriangles
+    // - out.trianglelist (stored in the format T0a,T0b,T0c,T1a,T1b,T1c,T2a,T2b,T2c,...)
+
+
+    // Sample surface:
+    for (size_t i = 0; i < out.numberofpoints; i++) {
+        auto x = Geometry::Point2D(out.pointlist[i * 2], out.pointlist[i * 2 + 1]);
+        double height = helperSurface.eval(x);
+        auto vhd = mesh.add_vertex(BaseTraits::Point(x[0], x[1], height));
+        handles.push_back(vhd);
+    }
+
     // Build triangles:
-    for (size_t i = 0; i < resolution - 1; ++i)
-        for (size_t j = 0; j < resolution - 1; ++j) {
+    for (size_t i = 0; i < out.numberoftriangles; i++) {
             tri.clear();
-            tri.push_back(handles[i * resolution + j]);
-            tri.push_back(handles[i * resolution + j + 1]);
-            tri.push_back(handles[(i + 1) * resolution + j]);
+            tri.push_back(handles[out.trianglelist[i * 3]]);
+            tri.push_back(handles[out.trianglelist[i * 3 + 1]]);
+            tri.push_back(handles[out.trianglelist[i * 3 + 2]]);
             mesh.add_face(tri);
-            tri.clear();
-            tri.push_back(handles[(i + 1) * resolution + j]);
-            tri.push_back(handles[i * resolution + j + 1]);
-            tri.push_back(handles[(i + 1) * resolution + j + 1]);
-            mesh.add_face(tri);
-        }
+    }
     Object::updateBaseMesh(false, false);
     qInfo() << "Finished initialization.\n";
 }

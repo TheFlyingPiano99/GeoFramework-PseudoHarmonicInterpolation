@@ -112,3 +112,8 @@ Geometry::Point2D Geometry::ModifiedGordonWixomSurface::getBoundingRectangleMax(
 {
     return boundingRectangleMax;
 }
+
+const std::vector<Geometry::Point2D> &Geometry::ModifiedGordonWixomSurface::getDiscretizedCurve() const
+{
+    return discretizedCurve;
+}

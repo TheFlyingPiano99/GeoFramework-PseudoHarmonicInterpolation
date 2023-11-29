@@ -4,6 +4,7 @@
 #include <functional>
 #include "modifiedgordonwixomsurface.h"
 
+
 class PseudoHarmonicSurface : public Object {
 public:
     PseudoHarmonicSurface(
