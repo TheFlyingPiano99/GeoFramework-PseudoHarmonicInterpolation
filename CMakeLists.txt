@@ -65,6 +65,8 @@ add_executable(geo-framework WIN32
   pseudoHarmonicSurface.cc pseudoHarmonicSurface.hh
   modifiedgordonwixomsurface.h modifiedgordonwixomsurface.cpp
 
+  ${CMAKE_CURRENT_SOURCE_DIR}/triangle/triangle.o
+
 
 
   )
@@ -90,5 +92,4 @@ target_link_libraries(geo-framework PUBLIC
   Qt6::Widgets
   Qt6::Xml
   ${QGLVIEWER_LIBRARY}
-  ${CMAKE_CURRENT_SOURCE_DIR}/triangle/triangle.o
   )
